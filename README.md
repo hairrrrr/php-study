@@ -1,6 +1,10 @@
 
 
-### 一 环境安装
+### 一 PHP 环境安装
+
+由于 PHP 版本过高，和其他插件，laravel 不兼容。遂止。
+
+
 
 #### 1. Apache 
 
@@ -194,17 +198,190 @@ Swap:            0B          0B          0B
 
 
 
-#### 3. Ubuntu Apt 快捷安装
+#### 3. laravel 环境安装
 
-https://www.php.net/manual/zh/install.unix.debian.php
+首先需要安装 composer
 
-
-
-
-
-
+```shell
+composer create-project laravel/laravel [project-name]
+```
 
 
 
+##### 可能遇到的问题
 
+1）composer 命令超时，将 composer 源更换为国内源。
+
+安装 [crm](https://github.com/slince/composer-registry-manager) composer registry manager
+
+```shell
+composer global require slince/composer-registry-manager
+composer repo:ls
+
+-- --------------- ------------------------------------------------
+     composer        https://packagist.org
+     phpcomposer     https://packagist.phpcomposer.com
+     aliyun          https://mirrors.aliyun.com/composer
+     tencent         https://mirrors.cloud.tencent.com/composer
+     huawei          https://mirrors.huaweicloud.com/repository/php
+     laravel-china   https://packagist.laravel-china.org
+     cnpkg           https://php.cnpkg.org
+     sjtug           https://packagist.mirrors.sjtug.sjtu.edu.cn
+-- --------------- ------------------------------------------------
+composer repo:use aliyun
+```
+
+再次执行 `composer repo:ls` 命令，看到前面带 `*` 的就是当前使用的镜像
+
+参考：
+
+https://gist.github.com/oanhnn/112f68e5b91a7dac7641bcd8b0ab13ac
+
+https://learnku.com/articles/15977/composer-accelerate-and-modify-mirror-source-in-china
+
+2）报错 `phpunit/phpunit 9.6.x-dev requires ext-dom * -> the requested PHP extension dom is missing from your system.`
+
+检查 dom 插件是否被下载
+
+```shell
+php -m
+```
+
+开启 dom 插件
+
+```shell
+php --ini
+```
+
+查看 php.ini 配置文件路径
+
+增加 `extension=dom` 这一行配置，或者取消掉 `;extension=dom` 前的 `;` 注释。
+
+重启 shell 即可。
+
+
+
+将 rpm 包转换为 deb 包并安装：
+
+https://digitalixy.com/linux/527370.html
+
+https://rpmfind.net/linux/rpm2html/search.php?query=php-xml(x86-64)
+
+
+
+https://stackoverflow.com/questions/5282264/php-warning-php-startup-unable-to-load-dynamic-library
+
+
+
+### 二 Linux sail（fail）
+
+由于云服务器不支持 kvm，遂止
+
+```shell
+root@VM-4-14-ubuntu:~# kvm-ok
+INFO: Your CPU does not support KVM extensions
+KVM acceleration can NOT be used
+```
+
+参考：https://docs.docker.com/compose/install/
+
+
+
+**1. Docker Desktop 安装**
+
+https://docs.docker.com/desktop/install/ubuntu/
+
+**2. 安装 Compose plugin**
+
+https://docs.docker.com/compose/install/linux/#install-using-the-repository 
+
+**3. 安装 docker compose standalone**
+
+https://docs.docker.com/compose/install/standalone/
+
+官网上 curl 安装 docker-compose 后，可执行程序运行没有任何响应，尝试 pip 安装遇到报错：
+
+```
+File "/usr/share/python-wheels/urllib3-1.25.8-py2.py3-none-any.whl/urllib3/contrib/pyopenssl.py", line 46, in <module>
+File "/usr/lib/python3/dist-packages/OpenSSL/init.py", line 8, in <module>
+from OpenSSL import crypto, SSL
+File "/usr/lib/python3/dist-packages/OpenSSL/crypto.py", line 1553, in <module>
+class X509StoreFlags(object):
+File "/usr/lib/python3/dist-packages/OpenSSL/crypto.py", line 1571, in X509StoreFlags
+NOTIFY_POLICY = _lib.X509_V_FLAG_NOTIFY_POLICY
+AttributeError: module 'lib' has no attribute 'X509_V_FLAG_NOTIFY_POLICY'
+```
+
+解决办法：
+
+```shell
+sudo apt purge python3-pip
+wget https://bootstrap.pypa.io/get-pip.py
+sudo python3 get-pip.py
+```
+
+重启 shell
+
+```shell
+pip install pyopenssl --upgrade
+```
+
+https://stackoverflow.com/questions/73830524/attributeerror-module-lib-has-no-attribute-x509-v-flag-cb-issuer-check
+
+使用 pip 安装的 docker-compose 实际上是一个 Python 库,而不是官方的 Docker Compose 命令行工具。它提供了在 Python 代码中与 Docker Compose 集成的功能,而不是作为一个独立的命令行工具使用。
+
+参考：
+
+https://zhuanlan.zhihu.com/p/107981897
+
+```
+containerd.io docker-ce docker-ce-cli
+```
+
+
+
+### 三 尝试通过 apt 直接安装开发环境
+
+参考：https://dev.to/bilalniaz15/how-to-install-laravel-on-ubuntu-2004-lts-58hk
+
+`apache` 配置文件 `sites-available` 目录下新增了 `laravel.conf` 配置：
+
+```shell
+root@VM-4-14-ubuntu:/etc/apache2/sites-available# ls
+000-default.conf  default-ssl.conf  laravel.conf
+root@VM-4-14-ubuntu:/etc/apache2/sites-available# cat laravel.conf 
+<VirtualHost *:8080>
+ServerName localhost 
+ServerAdmin webmaster@localhost
+DocumentRoot /var/www/html/note/public
+<Directory /var/www/html/note>
+AllowOverride All
+</Directory>
+ErrorLog ${APACHE_LOG_DIR}/error.log
+CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+```
+
+服务器 8080 端口防火墙已开，80 端口可以访问，但是无法访问 8080 端口，8000 端口同样无法访问。
+
+今早尝试继续解决问题，但是 dpkg 软件包管理工具又出现了问题。。目前还没有解决：
+
+```php
+root@VM-4-14-ubuntu:/etc/apache2/sites-available# apt install php-pear
+Reading package lists... Done
+Building dependency tree       
+Reading state information... Done
+The following NEW packages will be installed:
+  php-pear
+0 upgraded, 1 newly installed, 0 to remove and 220 not upgraded.
+Need to get 287 kB of archives.
+After this operation, 2,121 kB of additional disk space will be used.
+Get:1 http://mirrors.tencentyun.com/ubuntu focal-security/main amd64 php-pear all 1:1.10.9+submodules+notgz-1ubuntu0.20.04.3 [287 kB]
+Fetched 287 kB in 0s (2,839 kB/s)
+dpkg: error processing archive /var/cache/apt/archives/php-pear_1%3a1.10.9+submodules+notgz-1ubuntu0.20.04.3_all.deb (--unpack):
+ subprocess dpkg-split returned error exit status 255
+Errors were encountered while processing:
+ /var/cache/apt/archives/php-pear_1%3a1.10.9+submodules+notgz-1ubuntu0.20.04.3_all.deb
+E: Sub-process /usr/bin/dpkg returned an error code (1)
+```
 
