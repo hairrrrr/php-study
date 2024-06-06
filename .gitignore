@@ -1,2 +1,7 @@
 node_modules/
 package*
+notebook/bootstrap
+notebook/storage
+notebook/tests
+notebook/vendor
+notebook/public

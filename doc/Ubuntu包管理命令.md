@@ -56,6 +56,14 @@ gnome-terminal:
 
 
 
+#### 3. `apt-cache search xxx`
+
+查看可以安装的软件包
+
+
+
+
+
 ### 三 通过添加 PGP 密钥安装
 
 以安装 nodejs 为例：

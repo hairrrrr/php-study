@@ -1,6 +1,8 @@
 
 
-### 一 环境安装
+## 环境安装
+
+### 一 环境安装 PHP8.0 Laravel9
 
 下面介绍 Ubuntu 20.04 环境下，安装 LNMP，运行 Laravel 9.0 的经验。机器信息：
 
@@ -210,7 +212,136 @@ php artisan serve --host=0.0.0.0 --port=8080
 
 
 
+### 二 PHP8.3 Laravel 11
 
+`laravel` 11 开始使用 `sqlite`，需要安装 `sqlite` 插件。
+
+```shell
+apt install php8.3 php8.3-xml php8.3-curl php8.3-mbstring php8.3-sqlite3 php8.3-mysql
+```
+
+`apache` 服务启动失败，因为 `nginx` 占用了端口 80，停止 nginx 重启 apache 服务器即可。
+
+如果遇到报错：
+
+```shell
+- Root composer.json requires fruitcake/php-cors ^1.3, found fruitcake/php-cors[dev-feat-setOptions, dev-master, dev-main, dev-test-8.2, v0.1.0, v0.1.1, v0.1.2, v1.0-alpha1, ..., 1.2.x-dev (alias of dev-master)] but it does not match the constraint
+```
+
+可能是因为 `composer` 源替换为了阿里云源的原因，执行以下命令重置源：
+
+```shell
+composer config -g --unset repos.packagist
+composer config -g --list
+```
+
+执行 `laravel` 命令
+
+```shell
+composer create-project laravel/laravel:^11 test
+```
+
+换回阿里源：
+
+```shell
+composer config -g repo.packagist composer https://mirrors.aliyun.com/composer/
+```
+
+
+
+## 项目
+
+### 一 任务说明 
+
+**任务说明：**
+
+1. **项目名称：** 记事本
+2. **技术栈：** Laravel
+3. **功能需求：**
+   - **记录包含标题和内容**
+   - 给单条记录添加 tag
+     - 使用 Laravel 提供的 Relation 功能实现
+   - 恢复被删除的记录
+     - 使用软删除
+   - 支持复制单条记录
+     - 复制后的记录标题需要按照以下规则修改：
+       - 如果被复制的记录标题是 "Title"，如果数据库中不存在标题为 "Title(1)" 的记录，复制后的记录标题是 "Title(1)"。
+       - 如果被复制的记录标题是 "Title"，但是数据库中已经存在标题为 "Title(1)" 的记录，复制后的记录标题是 "Title(2)"；如果 "Title(2)" 也存在并且 "Title(3)" 不存在，复制后的记录标题是 "Title(3)"，以此类推。
+       - 如果被复制的记录标题是 "Title(99)"，如果数据库中不存在标题为 "Title(99)(1)" 的记录，复制后的记录标题是 "Title(99)(1)"；如果存在，复制后的记录标题是 "Title(99)(2)"。
+       - 如果被复制的记录标题是 "Title(99)(99)"，如果数据库中不存在标题为 "Title(99)(99)(1)" 的记录，复制后的记录标题是 "Title(99)(99)(1)"，以此类推。
+4. **测试需求：**
+   - 给记事本项目加上单元和功能测试
+5. **持续集成：**
+   - 实现 GitHub Action 持续集成
+
+
+
+```
+  public function copy($id)
+    {
+        $note = Note::find($id);
+        $newTitle = $this->generateTitle($note->title);
+        $newNote = $note->replicate();
+        $newNote->title = $newTitle;
+        $newNote->save();
+        return response()->json($newNote);
+    }
+
+    private function generateTitle($title)
+    {
+        $newTitle = $title;
+        $i = 1;
+        while (Note::where('title', $newTitle)->exists()) {
+            $newTitle = "{$title}($i)";
+            $i++;
+        }
+        return $newTitle;
+    }
+```
+
+
+
+### 二 开发
+
+
+
+### 三 测试
+
+
+
+### 四 持续集成
+
+
+
+### 五 Debug 日志
+
+#### 1. SQLSTATE[HY000]: General error: 1824
+
+SQLSTATE[HY000]: General error: 1824 Failed to open the referenced table 'notes' (Connection: mysql, SQL: alter table `notes_tags` add constraint `notes_tags_note_id_foreign` foreign key (`note_id`) references `notes` (`id`) on delete cascade)
+
+```shell
+╭─root at VM-4-14-ubuntu in ~/php/note 24-06-06 - 4:49:46
+╰─○ php artisan migrate:fresh
+
+  Dropping all tables .............................................................................................. 300.73ms DONE
+
+   INFO  Preparing database.
+
+  Creating migration table .......................................................................................... 63.41ms DONE
+
+   INFO  Running migrations.
+
+  0001_01_01_000000_create_users_table ............................................................................. 397.04ms DONE
+  0001_01_01_000001_create_cache_table ............................................................................. 165.54ms DONE
+  0001_01_01_000002_create_jobs_table .............................................................................. 271.93ms DONE
+  2024_06_05_193600_create_notes_table .............................................................................. 61.56ms DONE
+  2024_06_05_193730_create_tags_table .............................................................................. 536.64ms DONE
+
+```
+
+`php artisan migrate:fresh` 在建表时是根据 migrations 目录下文件的顺序进行的。如果表 1 中存在一个外键指向表 2，那么表 2 应该先于表 1 创建。
+
+https://stackoverflow.com/questions/60826299/general-error-1824-failed-to-open-the-referenced-table
 
 
 
