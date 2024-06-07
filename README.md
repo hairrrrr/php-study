@@ -104,6 +104,20 @@ server {
 
 
 
+##### php-fpm
+
+如果安装过 apache 的话，可能会收到提示：
+
+```
+NOTICE: To enable PHP 8.3 FPM in Apache2 do:
+NOTICE: a2enmod proxy_fcgi setenvif
+NOTICE: a2enconf php8.3-fpm
+```
+
+
+
+
+
 #### 3. 安装 MySQL
 
 ```shell
@@ -307,6 +321,48 @@ composer config -g repo.packagist composer https://mirrors.aliyun.com/composer/
 
 ### 三 测试
 
+#### 测试文件与生成命令
+
+单元测试：`tests/Unit`
+
+功能测试：`tests/Feature`
+
+`phpunit.xml` 文件中定义了 环境变量 ，`Laravel` 会自动配置环境变量为 `testing`。如果自由定义其他测试环境配置值，确保在运行测试之前使用 `config:clear` Artisan 命令清除配置缓存！
+
+
+
+**生成测试命令**：`php artisan make:test UserTest --unit`
+
+#### 测试选项
+
+**报告测试覆盖率**：需要确定测试用例是否真的测到了某些程序代码，以及在运行测试时究竟使用了多少应用程序代码
+
+`php artisan test --coverage`
+
+功能需要 Xdebug 或 PCOV
+
+pcov 安装步骤：
+
+```shell
+apt install php-pear
+apt-get install php-dev
+```
+
+编辑 `/etc/php/8.3/cli/php.ini`
+
+```
+extension=pcov.so
+pcov.enabled=1
+```
+
+
+
+**测试性能分析**
+
+`php artisan test --profile`
+
+
+
 
 
 ### 四 持续集成
@@ -344,6 +400,15 @@ SQLSTATE[HY000]: General error: 1824 Failed to open the referenced table 'notes'
 https://stackoverflow.com/questions/60826299/general-error-1824-failed-to-open-the-referenced-table
 
 
+
+#### 2. `request()->is()` 和 `request()->(path)`
+
+如果路由为 `/notes`，下面试通过这两个函数确定请求路由的方式：
+
+```php
+request()->is('notes');
+request()->path('/notes')
+```
 
 
 
